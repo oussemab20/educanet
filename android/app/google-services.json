@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "426935205049",
+    "project_id": "educanet-a9ec8",
+    "storage_bucket": "educanet-a9ec8.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426935205049:android:334952809c5760f1686f68",
+        "android_client_info": {
+          "package_name": "com.example.educanet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhumJiTdrwS0W4XTEplm9vhbWK-qxF1mc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426935205049:android:79a11d60bde7dd40686f68",
+        "android_client_info": {
+          "package_name": "com.mobile.educanet"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhumJiTdrwS0W4XTEplm9vhbWK-qxF1mc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
