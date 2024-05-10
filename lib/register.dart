@@ -312,18 +312,17 @@ class _RegisterState extends State<Register> {
   void signUp(String email, String password, String rool) async {
     CircularProgressIndicator();
     if (_formkey.currentState!.validate()) {
-      await _auth
-          .createUserWithEmailAndPassword(email: email, password: password)
+      await _auth.createUserWithEmailAndPassword(email: email, password: password)
           .then((value) => {postDetailsToFirestore(email, rool)})
           .catchError((e) {});
     }
   }
 
   postDetailsToFirestore(String email, String rool) async {
-    FirebaseFirestore firebaseFirestore = FirebaseFirestore.instance;
     var user = _auth.currentUser;
     CollectionReference ref = FirebaseFirestore.instance.collection('users');
-    ref.doc(user!.uid).set({'email': emailController.text, 'rool': rool});
+    ref.doc(user?.uid).set({'email': emailController.text, 'rool': rool,
+      'id': user?.uid, "name": emailController.text, "created_at": DateTime.now()});
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => LoginPage()));
   }

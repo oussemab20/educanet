@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:educanet/chat_screen.dart';
+import 'package:educanet/login.dart';
 import 'package:educanet/student.dart';
 import 'package:educanet/teacher.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
-import 'chat.dart';
 import 'firebase_options.dart';
 import 'home.dart';
 import 'register.dart';
@@ -33,7 +34,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(
         primaryColor: Colors.blue[900],
       ),
-      home: HomeScreen(),
+      home: LoginPage(),
     );
   }
 }
@@ -72,13 +73,13 @@ class NavDrawer extends StatelessWidget {
               MaterialPageRoute(builder: (context) => HomePage()),
             ),
           ),
-          ListTile(
-            title: Text('Chat'),
-            leading: Icon(Icons.chat),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => ChatPage()),
-            ),
-          ),
+          // ListTile(
+          //   title: Text('Chat'),
+          //   leading: Icon(Icons.chat),
+          //   onTap: () => Navigator.of(context).push(
+          //     MaterialPageRoute(builder: (context) => ChatScreen()),
+          //   ),
+          // ),
           ListTile(
             title: Text('Teacher'),
             leading: Icon(Icons.person),

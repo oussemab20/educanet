@@ -257,11 +257,8 @@ class _LoginPageState extends State<LoginPage> {
 
   void route() {
     User? user = FirebaseAuth.instance.currentUser;
-    var kk = FirebaseFirestore.instance
-        .collection('users')
-        .doc(user?.uid)
-        .get()
-        .then((DocumentSnapshot documentSnapshot) {
+
+    FirebaseFirestore.instance.collection('users').doc(user?.uid).get().then((DocumentSnapshot documentSnapshot) {
       if (documentSnapshot.exists) {
         if (documentSnapshot.get('rool') == "Teacher") {
           Navigator.pushReplacement(
@@ -274,7 +271,7 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => Student(),
+              builder: (context) => Student(userId: user?.uid,),
             ),
           );
         }
@@ -290,11 +287,6 @@ class _LoginPageState extends State<LoginPage> {
   void signIn(String email, String password) async {
     if (_formkey.currentState!.validate()) {
       try {
-        UserCredential userCredential =
-            await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
         route();
       } on FirebaseAuthException catch (e) {
         if (e.code == 'user-not-found') {

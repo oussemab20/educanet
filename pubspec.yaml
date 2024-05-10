@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.2 <4.0.0'
+  sdk: '>=3.3.1 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -49,8 +49,10 @@ dependencies:
 
   flutter_chat_ui: ^1.6.12
 
-
-
+  path: ^1.9.0
+  record_mp3: ^3.0.0
+  audioplayers: ^6.0.0
+  http:
 
 dev_dependencies:
   flutter_test:
