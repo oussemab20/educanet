@@ -3,12 +3,17 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record_mp3/record_mp3.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:social_media_recorder/audio_encoder_type.dart';
+import 'package:social_media_recorder/screen/social_media_recorder.dart';
+import 'package:voice_message_package/voice_message_package.dart';
 
 class ChatScreen extends StatefulWidget {
 
@@ -51,22 +56,21 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.pink,
+        backgroundColor: Colors.blue,
         title: Row(
           children: [
             CircleAvatar(
               backgroundColor: Colors.white,
-              child: Text(widget.docs['name']
+              child: Text(widget.docs['rool']
                   .toString()
                   .split(' ')
                   .first
-                  .substring(0, 1) +
-                  widget.docs['name'].toString().split(' ')[1].substring(0, 1)),
+                  .substring(0, 1)),
             ),
             const SizedBox(
               width: 10,
             ),
-            Text(widget.docs['name']),
+            Expanded(child: Text(widget.docs['name'], overflow: TextOverflow.ellipsis,)),
           ],
         ),
         // CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
@@ -118,19 +122,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 const SizedBox(
                   height: 10,
                 ),
-                isSending
-                    ? LinearProgressIndicator(
-                  backgroundColor: Colors.grey[100],
-                  valueColor:
-                  const AlwaysStoppedAnimation<Color>(Colors.pink),
-                )
-                    : const SizedBox(),
                 Container(
-                  color: Colors.black26,
+                  color: Colors.white,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
+                      !isRecording?
+                      Expanded(flex: 4,
                         child: Container(
                           margin: const EdgeInsets.all(5),
                           padding: const EdgeInsets.fromLTRB(10, 0, 5, 0),
@@ -144,38 +142,70 @@ class _ChatScreenState extends State<ChatScreen> {
                             controller: _tec,
                           ),
                         ),
+                      ) : SizedBox(),
+                      Expanded(
+                        child: Container(
+                            margin: const EdgeInsets.fromLTRB(5, 5, 10, 5),
+                             child: SocialMediaRecorder(
+                               maxRecordTimeInSecond: 60,
+                               backGroundColor: Colors.white,
+                               recordIcon: Padding(
+                                 padding: const EdgeInsets.all(8.0),
+                                 child: Icon(Icons.mic,color: Colors.black,),
+                               ),
+                               startRecording: () {
+                                 setState(() {
+                                   isRecording = true;
+                                 });
+                               },
+                               stopRecording: (time) {
+
+                               },
+                               sendRequestFunction: (soundFile, time) {
+                                 setState(() {
+                                   isRecording = false;
+                                 });
+                                 final firebaseStorageRef = FirebaseStorage.instance.ref()
+                                     .child('profilepics/audio${DateTime.now().millisecondsSinceEpoch.toString()}}.jpg');
+
+                                 var task = firebaseStorageRef.putFile(soundFile);
+                                 task.then((value) async {
+                                   print('##############done#########');
+                                   var audioURL = await value.ref.getDownloadURL();
+                                   String strVal = audioURL.toString();
+                                   await sendAudioMsg(strVal);
+                                 }).catchError((e) {
+                                   print(e);
+                                 });
+                               },
+                               encode: AudioEncoderType.AAC,
+                             ),
+
+
+                            // child: GestureDetector(
+                            //   onLongPress: () {
+                            //     startRecord();
+                            //     setState(() {
+                            //       isRecording = true;
+                            //     });
+                            //   },
+                            //   onLongPressEnd: (details) {
+                            //     stopRecord();
+                            //     setState(() {
+                            //       isRecording = false;
+                            //     });
+                            //   },
+                            //   child: Container(
+                            //       padding: const EdgeInsets.all(10),
+                            //       child: const Icon(
+                            //         Icons.mic,
+                            //         color: Colors.white,
+                            //         size: 20,
+                            //       )),
+                            // )
+                        ),
                       ),
-                      Container(
-                          height: 40,
-                          margin: const EdgeInsets.fromLTRB(5, 5, 10, 5),
-                          decoration: BoxDecoration(boxShadow: [
-                            BoxShadow(
-                                color: isRecording
-                                    ? Colors.white
-                                    : Colors.black12,
-                                spreadRadius: 4)
-                          ], color: Colors.pink, shape: BoxShape.circle),
-                          child: GestureDetector(
-                            onLongPress: () {
-                              startRecord();
-                              setState(() {
-                                isRecording = true;
-                              });
-                            },
-                            onLongPressEnd: (details) {
-                              stopRecord();
-                              setState(() {
-                                isRecording = false;
-                              });
-                            },
-                            child: Container(
-                                padding: const EdgeInsets.all(10),
-                                child: const Icon(
-                                  Icons.mic,
-                                  color: Colors.white,
-                                  size: 20,
-                                )),
-                          )),
+                      !isRecording?
                       Container(
                         height: 40,
                         margin: const EdgeInsets.fromLTRB(5, 5, 10, 5),
@@ -192,7 +222,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             _tec.clear();
                           },
                         ),
-                      ),
+                      ): SizedBox(),
                     ],
                   ),
                 )
@@ -316,32 +346,28 @@ class _ChatScreenState extends State<ChatScreen> {
                 : Colors.orangeAccent,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: GestureDetector(
-              onTap: () {
-                _loadFile(doc['content']);
+          child: VoiceMessageView(
+            controller: VoiceController(
+              /// audioSrc: 'https://dl.solahangs.com/Music/1403/02/H/128/Hiphopologist%20-%20Shakkak%20%28128%29.mp3',
+              audioSrc: '${doc['content']}',
+              onComplete: () {
+                /// do something on complete
               },
-              onSecondaryTap: () {
-                stopRecord();
+              onPause: () {
+                /// do something on pause
               },
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    children: [
-                      Icon(isPlayingMsg ? Icons.cancel : Icons.play_arrow),
-                      Text(
-                        'Audio-${doc['timestamp']}',
-                        maxLines: 10,
-                      ),
-                    ],
-                  ),
-                  Text(
-                    "$date $hour:$min" + ampm,
-                    style: const TextStyle(fontSize: 10),
-                  )
-                ],
-              )),
+              onPlaying: () {
+                /// do something on playing
+              },
+              onError: (err) {
+                /// do somethin on error
+              },
+              maxDuration: const Duration(seconds: 60),
+              isFile: false,
+            ),
+            innerPadding: 12,
+            cornerRadius: 20,
+          )
         ),
       );
     } else {
@@ -355,8 +381,8 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: (doc['senderId'] == userID)
-                ? Colors.greenAccent
-                : Colors.orangeAccent,
+                ? Colors.grey
+                : Colors.blueGrey,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -413,7 +439,9 @@ class _ChatScreenState extends State<ChatScreen> {
       RecordMp3.instance.start("$recordFilePath", (type) {
         setState(() {});
       });
-    } else {}
+    } else {
+
+    }
     setState(() {});
   }
 

@@ -7,7 +7,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
 import 'firebase_options.dart';
-import 'home.dart';
 import 'register.dart';
 
 
@@ -35,67 +34,6 @@ class _MyAppState extends State<MyApp> {
         primaryColor: Colors.blue[900],
       ),
       home: LoginPage(),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Home'),
-      ),
-      drawer: NavDrawer(),
-      body: Center(
-        child: Text('Home Screen'),
-      ),
-    );
-  }
-}
-
-class NavDrawer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          ListTile(
-            title: Text('Home'),
-            leading: Icon(Icons.home),
-            onTap: () => Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => HomePage()),
-            ),
-          ),
-          // ListTile(
-          //   title: Text('Chat'),
-          //   leading: Icon(Icons.chat),
-          //   onTap: () => Navigator.of(context).push(
-          //     MaterialPageRoute(builder: (context) => ChatScreen()),
-          //   ),
-          // ),
-          ListTile(
-            title: Text('Teacher'),
-            leading: Icon(Icons.person),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => Teacher()),
-            ),
-          ),
-          ListTile(
-            title: Text('Student'),
-            leading: Icon(Icons.person),
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (context) => Student()),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

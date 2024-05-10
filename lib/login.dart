@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'student.dart';
 import 'teacher.dart';
 import 'register.dart';
@@ -255,39 +256,46 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void route() {
-    User? user = FirebaseAuth.instance.currentUser;
+  Future<void> route(String email, String password) async {
+    SharedPreferences _prefs = await SharedPreferences.getInstance();
+    FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email, password: password
+    ).then((value) {
+      FirebaseFirestore.instance.collection('users').where('id', isEqualTo: value.user?.uid).get(
 
-    FirebaseFirestore.instance.collection('users').doc(user?.uid).get().then((DocumentSnapshot documentSnapshot) {
-      if (documentSnapshot.exists) {
-        if (documentSnapshot.get('rool') == "Teacher") {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => Teacher(),
-            ),
-          );
+      ).then((documentSnapshot) {
+        if (documentSnapshot.docs.isNotEmpty) {
+          if (documentSnapshot.docs[0]['rool'] == "Teacher") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Teacher(userId: value.user?.uid,),
+              ),
+            );
+          } else if (documentSnapshot.docs[0]['rool'] == "Student") {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => Student(userId: value.user?.uid,),
+              ),
+            );
+          }
+          _prefs.setString('id', documentSnapshot.docs[0]['id']);
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => Student(userId: user?.uid,),
-            ),
-          );
+          print('Document does not exist on the database');
+          setState(() {
+            visible = false;
+          });
         }
-      } else {
-        print('Document does not exist on the database');
-        setState(() {
-          visible = false;
-        });
-      }
+      });
+
     });
   }
 
   void signIn(String email, String password) async {
     if (_formkey.currentState!.validate()) {
       try {
-        route();
+        route(email, password);
       } on FirebaseAuthException catch (e) {
         if (e.code == 'user-not-found') {
           print('No user found for that email.');

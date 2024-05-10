@@ -1,14 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:educanet/chat_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:social_media_recorder/audio_encoder_type.dart';
-import 'package:social_media_recorder/screen/social_media_recorder.dart';
-import 'package:voice_message_package/voice_message_package.dart';
 
-import 'login.dart';
-import 'main.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:educanet/login.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'chat_screen.dart';
 
 class Student extends StatefulWidget {
 
@@ -20,42 +16,54 @@ class Student extends StatefulWidget {
 }
 
 class _StudentState extends State<Student> {
-  String? soundRef;
-  String? soundUrl;
+
 
   String? userId;
   @override
   void initState() {
-    userId = widget.userId;
+    getUserId();
     super.initState();
+  }
+
+  getUserId() async {
+    final _prefs = await SharedPreferences.getInstance();
+    userId = _prefs.getString('id');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text("Student"),
+        elevation: 0,
+        backgroundColor: Colors.blue,
+        title: Text('Teachers'),
         actions: [
           IconButton(
-            onPressed: () {
-              logout(context);
+            icon: Icon(Icons.arrow_back_sharp),
+            onPressed: () async {
+              final _prefs = await SharedPreferences.getInstance();
+              _prefs.setString('id', '');
+              await _prefs.clear().then((value) => Navigator.of(context)
+                  .pushReplacement(MaterialPageRoute(builder: (context) => LoginPage())));
             },
-            icon: Icon(
-              Icons.logout,
-            ),
-          )
+          ),
+          // CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
+
         ],
       ),
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
+      body: Stack(
+        children: [
+          // buildFloatingSearchBar(),
+          Positioned(
+            top: 70,
+            child: Container(
               height: MediaQuery.of(context).size.height * 0.8,
               width: MediaQuery.of(context).size.width,
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                stream: FirebaseFirestore.instance
+                    .collection('users').where('rool', isEqualTo: 'Teacher')
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (snapshot.hasData && snapshot.data != null) {
                     return ListView.builder(
@@ -69,8 +77,18 @@ class _StudentState extends State<Student> {
                   }
                 },
               ),
-            )
-          ],
+            ),
+          ),
+          // buildFloatingSearchBar(),
+        ],
+      ),
+      // CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.blue,
+        onPressed: () {  },
+        child: Icon(
+          Icons.message,
+          color: Colors.white,
         ),
       ),
     );
@@ -88,19 +106,16 @@ class _StudentState extends State<Student> {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30)),
         margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        color: Colors.pink,
+        color: Colors.black,
         child: Padding(
           padding: EdgeInsets.all(5),
           child: Container(
               child: ListTile(
                 leading: CircleAvatar(
                   backgroundColor: Colors.white,
-                  child: Text(doc['name']
+                  child: Text(doc['rool']
                       .toString()
-                      .split(' ')
-                      .first
-                      .substring(0, 1) +
-                      doc['name'].toString().split(' ')[1].substring(0, 1)),
+                      .substring(0, 1)),
                 ),
                 title: Text(
                   doc['name'],
@@ -113,14 +128,75 @@ class _StudentState extends State<Student> {
         : Container();
   }
 
-  Future<void> logout(BuildContext context) async {
-    CircularProgressIndicator();
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HomeScreen(),
-      ),
-    );
-  }
+// CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
+// Widget buildFloatingSearchBar() {
+//   final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+//   List<dynamic> searchResult = [];
+//   return FloatingSearchBar(
+//     borderRadius: BorderRadius.circular(30),
+//     hint: 'Search Chats',
+//     scrollPadding: const EdgeInsets.only(top: 16, bottom: 56),
+//     transitionDuration: const Duration(milliseconds: 500),
+//     transitionCurve: Curves.easeInOut,
+//     physics: const BouncingScrollPhysics(),
+//     axisAlignment: isPortrait ? 0.0 : -1.0,
+//     openAxisAlignment: 0.0,
+//     openWidth: isPortrait ? 600 : 500,
+//     debounceDelay: const Duration(milliseconds: 500),
+//     onQueryChanged: (query) {},
+//     backdropColor: Colors.pink,
+//     automaticallyImplyBackButton: false,
+//     transition: CircularFloatingSearchBarTransition(),
+//     actions: [
+//       FloatingSearchBarAction.back(
+//         color: Colors.pink,
+//         showIfClosed: false,
+//       ),
+//       FloatingSearchBarAction.searchToClear(
+//         color: Colors.pink,
+//         showIfClosed: true,
+//       ),
+//     ],
+//     builder: (context, transition) {
+//       return ClipRRect(
+//         child: Material(
+//             color: Colors.white,
+//             elevation: 4.0,
+//             child: Container(
+//               decoration:
+//               BoxDecoration(borderRadius: BorderRadius.circular(20)),
+//               height: MediaQuery.of(context).size.height * 0.9,
+//               child: ListView.builder(
+//                 itemCount: 0,
+//                 itemBuilder: (context, index) {
+//                   return GestureDetector(
+//                     onTap: () {},
+//                     child: Container(
+//                       margin:
+//                       EdgeInsets.symmetric(horizontal: 38, vertical: 10),
+//                       padding: EdgeInsets.all(10),
+//                       alignment: Alignment.center,
+//                       decoration: BoxDecoration(
+//                           color: Colors.white,
+//                           borderRadius: BorderRadius.circular(20),
+//                           boxShadow: [
+//                             BoxShadow(blurRadius: 2, color: Colors.grey)
+//                           ]),
+//                       height: 60,
+//                       width: 300,
+//                       child: Text(
+//                         ' ',
+//                         maxLines: 3,
+//                         style: TextStyle(fontSize: 15),
+//                       ),
+//                     ),
+//                   );
+//                 },
+//               ),
+//             )),
+//       );
+//     },
+//   );
+// }
+
 }

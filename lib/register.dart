@@ -245,7 +245,8 @@ class _RegisterState extends State<Register> {
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(20.0))),
                               elevation: 5.0,
-                              height: 40,
+                              height: 60,
+
                               onPressed: () {
                                 CircularProgressIndicator();
                                 Navigator.push(
@@ -268,7 +269,7 @@ class _RegisterState extends State<Register> {
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(20.0))),
                               elevation: 5.0,
-                              height: 40,
+                              height: 60,
                               onPressed: () {
                                 setState(() {
                                   showProgress = true;

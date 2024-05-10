@@ -1,116 +1,202 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:social_media_recorder/audio_encoder_type.dart';
-import 'package:social_media_recorder/screen/social_media_recorder.dart';
-import 'package:voice_message_package/voice_message_package.dart';
 
-import 'login.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:educanet/login.dart';
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'chat_screen.dart';
 
 class Teacher extends StatefulWidget {
-  const Teacher({super.key});
+
+  final String? userId;
+  const Teacher({super.key, this.userId});
 
   @override
   State<Teacher> createState() => _TeacherState();
 }
 
-
 class _TeacherState extends State<Teacher> {
-  String? soundRef;
-  String? soundUrl;
+
+
+  String? userId;
+  @override
+  void initState() {
+    getUserId();
+    super.initState();
+  }
+
+  getUserId() async {
+    final _prefs = await SharedPreferences.getInstance();
+    userId = _prefs.getString('id');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text("Teacher"),
+        elevation: 0,
+        backgroundColor: Colors.deepOrange,
+        title: Text('students'),
         actions: [
           IconButton(
-            onPressed: () {
-              logout(context);
+            icon: Icon(Icons.arrow_back_sharp),
+            onPressed: () async {
+              final _prefs = await SharedPreferences.getInstance();
+              _prefs.setString('id', '');
+              await _prefs.clear().then((value) => Navigator.of(context)
+                  .pushReplacement(MaterialPageRoute(builder: (context) => LoginPage())));
             },
-            icon: Icon(
-              Icons.logout,
-            ),
-          )
+          ),
+          // CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
+
         ],
       ),
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            soundUrl != null ?
-            VoiceMessageView(
-              controller: VoiceController(
-                /// audioSrc: 'https://dl.solahangs.com/Music/1403/02/H/128/Hiphopologist%20-%20Shakkak%20%28128%29.mp3',
-                audioSrc: '$soundUrl',
-                onComplete: () {
-                  /// do something on complete
+      body: Stack(
+        children: [
+          // buildFloatingSearchBar(),
+          Positioned(
+            top: 70,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.8,
+              width: MediaQuery.of(context).size.width,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance
+                    .collection('users').where('rool', isEqualTo: 'Student')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasData && snapshot.data != null) {
+                    return ListView.builder(
+                      itemCount: snapshot.data?.docs.length,
+                      itemBuilder: (context, index) {
+                        return buildItem(snapshot.data?.docs[index]);
+                      },
+                    );
+                  } else {
+                    return Container();
+                  }
                 },
-                onPause: () {
-                  /// do something on pause
-                },
-                onPlaying: () {
-                  /// do something on playing
-                },
-                onError: (err) {
-                  /// do somethin on error
-                },
-                maxDuration: const Duration(seconds: 60),
-                isFile: false,
               ),
-              innerPadding: 12,
-              cornerRadius: 20,
-            ): const SizedBox(),
-            SocialMediaRecorder(
-              maxRecordTimeInSecond: 60,
-              startRecording: () {
-
-              },
-              stopRecording: (time) {
-
-              },
-              sendRequestFunction: (soundFile, time) {
-                debugPrint("Sound File Path: ${soundFile.path}");
-                setState(() {
-                  soundRef = soundFile.path.substring(soundFile.path.lastIndexOf("/") + 1,
-                      soundFile.path.lastIndexOf("."));
-                });
-
-                if(soundRef != null){
-                  FirebaseStorage.instance.ref("sounds/$soundRef").putFile(soundFile,
-                  ).then((taskSnapshot) {
-                    taskSnapshot.ref.getDownloadURL().then((downloadURL) {
-                      debugPrint("Sound File Url: $downloadURL");
-                      FirebaseFirestore.instance.collection('sounds').add({"url": downloadURL, "name": soundRef}
-                      ).then((value) {
-                        setState(() => soundUrl = downloadURL);
-
-                      });
-                    });
-                  });
-                }
-
-              },
-
-              encode: AudioEncoderType.AAC,
             ),
-          ],
+          ),
+          // buildFloatingSearchBar(),
+        ],
+      ),
+      // CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.black,
+        onPressed: () {  },
+        child: Icon(
+          Icons.message,
+          color: Colors.white,
         ),
       ),
     );
-
   }
 
-  Future<void> logout(BuildContext context) async {
-    CircularProgressIndicator();
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LoginPage(),
+  buildItem(doc) {
+    return (userId != doc['id'])
+        ? GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (context) => ChatScreen(docs: doc,),
+        ));
+      },
+      child: Card(
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30)),
+        margin: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        color: Colors.deepOrange,
+        child: Padding(
+          padding: EdgeInsets.all(5),
+          child: Container(
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: Colors.white,
+                  child: Text(doc['rool']
+                      .toString()
+                      .substring(0, 1)),
+                ),
+                title: Text(
+                  doc['name'],
+                  style: TextStyle(color: Colors.white),
+                ),
+              )),
+        ),
       ),
-    );
+    )
+        : Container();
   }
+
+// CONTRIBUTION ON THIS IS WELCOMED FOR FLUTTER ENTHUSIATS
+// Widget buildFloatingSearchBar() {
+//   final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+//   List<dynamic> searchResult = [];
+//   return FloatingSearchBar(
+//     borderRadius: BorderRadius.circular(30),
+//     hint: 'Search Chats',
+//     scrollPadding: const EdgeInsets.only(top: 16, bottom: 56),
+//     transitionDuration: const Duration(milliseconds: 500),
+//     transitionCurve: Curves.easeInOut,
+//     physics: const BouncingScrollPhysics(),
+//     axisAlignment: isPortrait ? 0.0 : -1.0,
+//     openAxisAlignment: 0.0,
+//     openWidth: isPortrait ? 600 : 500,
+//     debounceDelay: const Duration(milliseconds: 500),
+//     onQueryChanged: (query) {},
+//     backdropColor: Colors.pink,
+//     automaticallyImplyBackButton: false,
+//     transition: CircularFloatingSearchBarTransition(),
+//     actions: [
+//       FloatingSearchBarAction.back(
+//         color: Colors.pink,
+//         showIfClosed: false,
+//       ),
+//       FloatingSearchBarAction.searchToClear(
+//         color: Colors.pink,
+//         showIfClosed: true,
+//       ),
+//     ],
+//     builder: (context, transition) {
+//       return ClipRRect(
+//         child: Material(
+//             color: Colors.white,
+//             elevation: 4.0,
+//             child: Container(
+//               decoration:
+//               BoxDecoration(borderRadius: BorderRadius.circular(20)),
+//               height: MediaQuery.of(context).size.height * 0.9,
+//               child: ListView.builder(
+//                 itemCount: 0,
+//                 itemBuilder: (context, index) {
+//                   return GestureDetector(
+//                     onTap: () {},
+//                     child: Container(
+//                       margin:
+//                       EdgeInsets.symmetric(horizontal: 38, vertical: 10),
+//                       padding: EdgeInsets.all(10),
+//                       alignment: Alignment.center,
+//                       decoration: BoxDecoration(
+//                           color: Colors.white,
+//                           borderRadius: BorderRadius.circular(20),
+//                           boxShadow: [
+//                             BoxShadow(blurRadius: 2, color: Colors.grey)
+//                           ]),
+//                       height: 60,
+//                       width: 300,
+//                       child: Text(
+//                         ' ',
+//                         maxLines: 3,
+//                         style: TextStyle(fontSize: 15),
+//                       ),
+//                     ),
+//                   );
+//                 },
+//               ),
+//             )),
+//       );
+//     },
+//   );
+// }
+
 }
